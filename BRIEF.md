@@ -50,6 +50,7 @@ GET /api/v1/memory-graph/{workspace_id}
 ```
 
 Response shape:
+
 ```json
 {
   "workspace_id": 1,
@@ -103,33 +104,27 @@ Response shape:
 
 ### Entity types and their meaning
 
-| Type | What it represents | Example |
-|------|--------------------|---------|
-| Merchant | A vendor or payment source | "PG&E", "Tenant Transfer" |
-| Property | A real estate property | "Sunset Apartments", "Marina District Condo" |
-| Unit | A unit within a property | "Unit 5B", "Unit 201" |
-| User | A person (tenant, landlord, agent) | "Sarah Chen" |
-| ExpenseCategory | A category from the chart of accounts | "Rent Income", "Utilities" |
-| Entity | Generic (no specific type assigned) | "lease 3", "Rent Batch Deposit" |
+| Type            | What it represents                    | Example                                      |
+| --------------- | ------------------------------------- | -------------------------------------------- |
+| Merchant        | A vendor or payment source            | "PG&E", "Tenant Transfer"                    |
+| Property        | A real estate property                | "Sunset Apartments", "Marina District Condo" |
+| Unit            | A unit within a property              | "Unit 5B", "Unit 201"                        |
+| User            | A person (tenant, landlord, agent)    | "Sarah Chen"                                 |
+| ExpenseCategory | A category from the chart of accounts | "Rent Income", "Utilities"                   |
+| Entity          | Generic (no specific type assigned)   | "lease 3", "Rent Batch Deposit"              |
 
 ### Design direction
 
 Follow the Kiara brand identity. The reference UI library is at `~/projects/kiara/ui` — use its design tokens, colors, and typography.
 
-**Key brand elements:**
-- **Primary color**: Coral `#FF6139`
-- **Accent**: Teal `#A1CACC` / `#5EC4C0`
-- **Dark mode**: Warm espresso undertones, never cold gray/blue. Background `#151010`, surfaces warm-tinted.
-- **Fonts**: General Sans (UI), JetBrains Mono (code/data)
-- **Shape**: Rounded, pill-shaped badges, soft corners
-- **Shadows**: Warm espresso-toned, never pure black
-
 A working prototype already exists as a static HTML file at:
+
 ```
 ~/conductor/workspaces/kiara-backend/chengdu/scripts/memory_graph_template.html
 ```
 
 This prototype has the complete UI structure (sidebar with tabs, interactive graph via vis-network, detail panel, legend, search) and can be used as a functional reference. Generate it with real data by running:
+
 ```
 cd ~/conductor/workspaces/kiara-backend/chengdu
 uv run python -m scripts.visualize_memory --workspace-id 1 -o /tmp/cortex_preview.html --open
