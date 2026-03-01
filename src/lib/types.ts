@@ -70,6 +70,7 @@ export type EntityType =
   | "Unit"
   | "User"
   | "ExpenseCategory"
+  | "ClassificationPreference"
   | "Entity";
 
 /** Amber color used for episodes across sidebar, detail panel, and stats bar */
@@ -81,6 +82,7 @@ export const ENTITY_COLORS: Record<EntityType, string> = {
   Unit: "#8B5CF6",
   User: "#F59E0B",
   ExpenseCategory: "#EF4444",
+  ClassificationPreference: "#14B8A6",
   Entity: "#6B7280",
 };
 
@@ -90,6 +92,7 @@ export const ENTITY_COLORS_DARK: Record<EntityType, string> = {
   Unit: "#A78BFA",
   User: "#FBBF24",
   ExpenseCategory: "#F87171",
+  ClassificationPreference: "#2DD4BF",
   Entity: "#9CA3AF",
 };
 
@@ -100,6 +103,7 @@ export function getEntityType(labels: string[]): EntityType {
     "Unit",
     "User",
     "ExpenseCategory",
+    "ClassificationPreference",
   ];
   for (const t of types) {
     if (labels.includes(t)) return t;
@@ -235,6 +239,13 @@ export const ENTITY_ATTRIBUTE_META: Partial<
     attribution_level: { label: "Attribution", kind: "badge" },
     description: { label: "Description", kind: "text" },
   },
+  ClassificationPreference: {
+    merchant_name: { label: "Merchant", kind: "text" },
+    preferred_category: { label: "Category", kind: "badge" },
+    preferred_property: { label: "Property", kind: "text" },
+    is_managed: { label: "Managed", kind: "boolean" },
+    source: { label: "Source", kind: "badge" },
+  },
 };
 
 /**
@@ -258,6 +269,7 @@ export function formatAttributeValue(value: unknown): string {
  * User     → "Tenant"
  * Merchant → "utility"
  * ExpenseCategory → "expense"
+ * ClassificationPreference → "Home Depot"
  */
 export function getNodeSubtitle(node: GraphNode): string | null {
   if (!node.attributes) return null;
@@ -277,6 +289,8 @@ export function getNodeSubtitle(node: GraphNode): string | null {
       return a.service_type ? formatAttributeValue(a.service_type) : (a.default_category ? formatAttributeValue(a.default_category) : null);
     case "ExpenseCategory":
       return a.category_type ? formatAttributeValue(a.category_type) : null;
+    case "ClassificationPreference":
+      return a.merchant_name ? String(a.merchant_name) : (a.preferred_category ? formatAttributeValue(a.preferred_category) : null);
     default:
       return null;
   }

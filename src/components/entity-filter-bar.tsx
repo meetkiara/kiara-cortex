@@ -45,7 +45,7 @@ export function EntityFilterBar() {
   const soloType = isSoloMode ? visibleTypes[0] : null;
 
   return (
-    <div className="shrink-0 flex items-center gap-2 px-4 py-1.5 border-b border-border/40 bg-muted/20">
+    <div className="shrink-0 flex items-center gap-2 px-4 py-1.5 border-b border-border/40 bg-muted/20 min-w-0 overflow-hidden">
       {/* Label */}
       <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium shrink-0 select-none">
         Filter

@@ -129,7 +129,7 @@ export function Sidebar() {
   if (!graphData) return null;
 
   return (
-    <div className="w-[300px] shrink-0 border-r border-border/50 flex flex-col bg-background/80 backdrop-blur-sm">
+    <div className="w-[300px] max-w-[300px] min-w-0 shrink-0 border-r border-border/50 flex flex-col bg-background/80 backdrop-blur-sm">
       {/* Search */}
       <div className="px-3 py-2 border-b border-border/30">
         <div className="relative">

@@ -153,7 +153,7 @@ export function DetailPanel() {
     : undefined;
 
   return (
-    <div className="w-[340px] shrink-0 border-l border-border/50 glass flex flex-col animate-slide-in-right overflow-hidden min-h-0">
+    <div className="w-[340px] max-w-[340px] min-w-0 shrink-0 border-l border-border/50 glass flex flex-col animate-slide-in-right overflow-hidden min-h-0">
       {/* Colored accent bar */}
       {accentColor && (
         <div
@@ -309,16 +309,7 @@ export function DetailPanel() {
 
               <Separator className="bg-border/30" />
 
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
-                  Content
-                </p>
-                <div className="p-3 rounded-xl bg-muted/30 border border-border/20 max-h-64 overflow-auto">
-                  <pre className="text-[10px] font-mono whitespace-pre-wrap break-all text-foreground/80 leading-relaxed">
-                    {selectedEpisode.content}
-                  </pre>
-                </div>
-              </div>
+              <EpisodeContent content={selectedEpisode.content} />
             </>
           )}
         </div>
@@ -365,8 +356,8 @@ function NodeDetail({
               ["--tw-ring-color" as any]: `${nodeColor}20`,
             }}
           />
-          <div>
-            <h2 className="text-base font-semibold leading-tight">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold leading-tight break-words">
               {node.name}
             </h2>
             <div className="flex flex-wrap gap-1 mt-1.5">
@@ -423,7 +414,7 @@ function NodeDetail({
                 return (
                   <button
                     key={e.uuid}
-                    className="w-full text-left p-2.5 rounded-xl bg-muted/20 border border-border/20 text-[10px] cursor-pointer hover:bg-muted/40 transition-colors"
+                    className="w-full text-left p-2.5 rounded-xl bg-muted/20 border border-border/20 text-[10px] cursor-pointer hover:bg-muted/40 transition-colors overflow-hidden"
                     onClick={() => onSelectEdge(e)}
                   >
                     <div className="flex items-center gap-1.5 text-muted-foreground mb-1 min-w-0">
@@ -628,6 +619,100 @@ function CollapsibleSummary({ text }: { text: string }) {
       )}
     </div>
   );
+}
+
+/**
+ * Smart episode content renderer.
+ * Detects JSON-structured content and renders it as a styled key-value card.
+ * Falls back to plain preformatted text for free-text content.
+ */
+function EpisodeContent({ content }: { content: string }) {
+  const parsed = tryParseJson(content);
+
+  if (!parsed) {
+    // Plain text fallback
+    return (
+      <div>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
+          Content
+        </p>
+        <div className="p-3 rounded-xl bg-muted/30 border border-border/20 max-h-64 overflow-auto">
+          <pre className="text-[10px] font-mono whitespace-pre-wrap break-all text-foreground/80 leading-relaxed">
+            {content}
+          </pre>
+        </div>
+      </div>
+    );
+  }
+
+  // Structured JSON — render as labeled key-value pairs
+  const entries = Object.entries(parsed);
+  if (entries.length === 0) return null;
+
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
+        Content
+      </p>
+      <div className="rounded-xl bg-muted/20 border border-border/20 overflow-hidden divide-y divide-border/10">
+        {entries.map(([key, value]) => (
+          <div key={key} className="px-3 py-2 flex items-baseline gap-3">
+            <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap shrink-0 min-w-[80px]">
+              {key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+            </span>
+            <span className="text-[11px] text-foreground/90 min-w-0 break-words">
+              <ContentValue value={value} />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Render a single value from structured episode content with appropriate formatting */
+function ContentValue({ value }: { value: unknown }) {
+  if (value === null || value === undefined) {
+    return <span className="text-muted-foreground/50 italic">—</span>;
+  }
+  if (typeof value === "boolean") {
+    return (
+      <span
+        className={cn(
+          "inline-block text-[10px] font-medium px-2 py-0.5 rounded-full",
+          value
+            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+            : "bg-muted/40 text-muted-foreground"
+        )}
+      >
+        {value ? "Yes" : "No"}
+      </span>
+    );
+  }
+  if (typeof value === "number") {
+    return <span className="font-mono tabular-nums">{value}</span>;
+  }
+  // String values — title-case short enum-like values, keep longer text as-is
+  const str = String(value);
+  if (str.length < 40) {
+    return <>{formatAttributeValue(str)}</>;
+  }
+  return <>{str}</>;
+}
+
+/** Safely attempt JSON.parse on a string. Returns the object or null. */
+function tryParseJson(str: string): Record<string, unknown> | null {
+  const trimmed = str.trim();
+  if (!trimmed.startsWith("{")) return null;
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /** Clickable entity name in edge detail — navigates to the node on click */
