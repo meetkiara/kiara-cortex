@@ -13,8 +13,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const portNum = Number(port);
+    if (Number.isNaN(portNum)) {
+      return NextResponse.json(
+        { error: "Port must be a valid number" },
+        { status: 400 }
+      );
+    }
+
     await deleteEdge(
-      { host, port: Number(port), username, password },
+      { host, port: portNum, username, password },
       workspace,
       uuid
     );

@@ -12,6 +12,8 @@ export interface GraphNode {
   labels: string[];
   group_id: string;
   created_at: string;
+  /** Entity-specific attributes (address, role, service_type, etc.) */
+  attributes?: Record<string, unknown>;
 }
 
 export interface GraphEdge {
@@ -47,6 +49,12 @@ export interface GraphStats {
   episodes: number;
 }
 
+export interface WorkspaceInfo {
+  name: string;
+  nodeCount: number;
+  edgeCount: number;
+}
+
 export interface GraphData {
   workspace_id: string;
   group_id: string;
@@ -64,22 +72,25 @@ export type EntityType =
   | "ExpenseCategory"
   | "Entity";
 
+/** Amber color used for episodes across sidebar, detail panel, and stats bar */
+export const EPISODE_COLOR = { light: "#F59E0B", dark: "#FBBF24" } as const;
+
 export const ENTITY_COLORS: Record<EntityType, string> = {
-  Merchant: "#FF6139",
-  Property: "#5BA3A6",
-  Unit: "#A1CACC",
-  User: "#D4A843",
-  ExpenseCategory: "#8B4D4B",
-  Entity: "#B8B5A0",
+  Merchant: "#FF5722",
+  Property: "#0EA5E9",
+  Unit: "#8B5CF6",
+  User: "#F59E0B",
+  ExpenseCategory: "#EF4444",
+  Entity: "#6B7280",
 };
 
 export const ENTITY_COLORS_DARK: Record<EntityType, string> = {
-  Merchant: "#FF8A6A",
-  Property: "#6BC0C3",
-  Unit: "#B8DDE0",
-  User: "#E0BC5A",
-  ExpenseCategory: "#A86B69",
-  Entity: "#C8C5B2",
+  Merchant: "#FF7043",
+  Property: "#38BDF8",
+  Unit: "#A78BFA",
+  User: "#FBBF24",
+  ExpenseCategory: "#F87171",
+  Entity: "#9CA3AF",
 };
 
 export function getEntityType(labels: string[]): EntityType {
@@ -94,4 +105,179 @@ export function getEntityType(labels: string[]): EntityType {
     if (labels.includes(t)) return t;
   }
   return "Entity";
+}
+
+/**
+ * Vibrant color palette for individual node coloring.
+ * Used when nodes are generic "Entity" type — assigns a distinct
+ * hue to each node based on its name hash so every node stands out.
+ */
+const NODE_PALETTE_LIGHT = [
+  "#FF5722", // deep orange
+  "#0EA5E9", // sky blue
+  "#8B5CF6", // violet
+  "#F59E0B", // amber
+  "#EF4444", // red
+  "#10B981", // emerald
+  "#EC4899", // pink
+  "#06B6D4", // cyan
+  "#F97316", // orange
+  "#6366F1", // indigo
+  "#14B8A6", // teal
+  "#D946EF", // fuchsia
+];
+
+const NODE_PALETTE_DARK = [
+  "#FF7043", // deep orange
+  "#38BDF8", // sky blue
+  "#A78BFA", // violet
+  "#FBBF24", // amber
+  "#F87171", // red
+  "#34D399", // emerald
+  "#F472B6", // pink
+  "#22D3EE", // cyan
+  "#FB923C", // orange
+  "#818CF8", // indigo
+  "#2DD4BF", // teal
+  "#E879F9", // fuchsia
+];
+
+/** Simple string hash (djb2) — fast, deterministic */
+function hashString(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * Get the canonical color for an entity *type* (not a specific node).
+ * Always returns the type-based color: grey for generic Entity,
+ * the defined color for known types. Used for UI chrome (accent bars,
+ * detail panel headers, attribute cards) where type identity matters.
+ */
+export function getEntityTypeColor(
+  labels: string[],
+  isDark: boolean
+): string {
+  const type = getEntityType(labels);
+  return isDark ? ENTITY_COLORS_DARK[type] : ENTITY_COLORS[type];
+}
+
+/**
+ * Get a vibrant color for a specific node.
+ * - If the node has a recognized EntityType label (Merchant, Property, etc.),
+ *   returns the type color.
+ * - If the node is a generic "Entity", picks from a 12-hue palette based
+ *   on the node name hash, so each node gets a distinct color.
+ *
+ * Use `getEntityTypeColor` when you need the *type* color (e.g. detail panel).
+ */
+export function getNodeColor(
+  node: GraphNode,
+  isDark: boolean
+): string {
+  const type = getEntityType(node.labels);
+  if (type !== "Entity") {
+    return isDark ? ENTITY_COLORS_DARK[type] : ENTITY_COLORS[type];
+  }
+  // Generic Entity — hash the name to pick a vibrant color
+  const palette = isDark ? NODE_PALETTE_DARK : NODE_PALETTE_LIGHT;
+  const index = hashString(node.name) % palette.length;
+  return palette[index];
+}
+
+/* ─────────────────────────────────────────────────────────
+ * Entity Attribute Display Config
+ * Single source of truth for how entity-specific properties
+ * render in the UI. Adding a new property = one config line.
+ * ───────────────────────────────────────────────────────── */
+
+export interface AttributeMeta {
+  /** Human-readable label shown in the detail panel */
+  label: string;
+  /** Render style: badge (colored pill), text (plain), mono (code font), boolean (presence pill) */
+  kind: "badge" | "text" | "mono" | "boolean";
+}
+
+/**
+ * Per-entity-type ordered list of attribute keys + display config.
+ * Order here determines display order in the detail panel.
+ */
+export const ENTITY_ATTRIBUTE_META: Partial<
+  Record<EntityType, Record<string, AttributeMeta>>
+> = {
+  Property: {
+    address: { label: "Address", kind: "text" },
+    property_type: { label: "Type", kind: "badge" },
+    city: { label: "City", kind: "text" },
+    state: { label: "State", kind: "badge" },
+  },
+  Unit: {
+    label: { label: "Label", kind: "text" },
+    property_name: { label: "Property", kind: "text" },
+  },
+  User: {
+    role: { label: "Role", kind: "badge" },
+    email: { label: "Email", kind: "mono" },
+  },
+  Merchant: {
+    service_type: { label: "Service Type", kind: "text" },
+    is_recurring: { label: "Recurring", kind: "boolean" },
+    default_category: { label: "Default Category", kind: "text" },
+    merchant_category_code: { label: "MCC", kind: "mono" },
+    typical_amount_range: { label: "Typical Amount", kind: "text" },
+    payment_channel: { label: "Payment Channel", kind: "badge" },
+  },
+  ExpenseCategory: {
+    category_type: { label: "Category Type", kind: "badge" },
+    attribution_level: { label: "Attribution", kind: "badge" },
+    description: { label: "Description", kind: "text" },
+  },
+};
+
+/**
+ * Convert snake_case property value to Title Case for display.
+ * e.g., "single_family_home" → "Single Family Home"
+ */
+export function formatAttributeValue(value: unknown): string {
+  if (value == null) return "";
+  const str = String(value);
+  return str
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Get a short subtitle string for a node (for sidebar display).
+ * Returns null if no meaningful subtitle available.
+ *
+ * Property → "San Francisco, CA"
+ * Unit     → "Sunset Apartments"
+ * User     → "Tenant"
+ * Merchant → "utility"
+ * ExpenseCategory → "expense"
+ */
+export function getNodeSubtitle(node: GraphNode): string | null {
+  if (!node.attributes) return null;
+  const a = node.attributes;
+  const type = getEntityType(node.labels);
+
+  switch (type) {
+    case "Property": {
+      const parts = [a.city, a.state].filter(Boolean).map(String);
+      return parts.length > 0 ? parts.join(", ") : (a.address ? String(a.address) : null);
+    }
+    case "Unit":
+      return a.property_name ? String(a.property_name) : (a.label ? String(a.label) : null);
+    case "User":
+      return a.role ? formatAttributeValue(a.role) : (a.email ? String(a.email) : null);
+    case "Merchant":
+      return a.service_type ? formatAttributeValue(a.service_type) : (a.default_category ? formatAttributeValue(a.default_category) : null);
+    case "ExpenseCategory":
+      return a.category_type ? formatAttributeValue(a.category_type) : null;
+    default:
+      return null;
+  }
 }

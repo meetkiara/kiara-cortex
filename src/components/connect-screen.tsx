@@ -7,13 +7,6 @@ import { testConnection } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Database,
@@ -23,6 +16,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { savePersistedState } from "@/lib/persist";
 
 export function ConnectScreen() {
   const [host, setHost] = useState("localhost");
@@ -33,14 +27,12 @@ export function ConnectScreen() {
   const {
     isConnecting,
     connectionError,
-    workspaces,
-    selectedWorkspace,
     setConnection,
     setConnected,
     setConnecting,
     setConnectionError,
     setWorkspaces,
-    setSelectedWorkspace,
+    setWorkspaceInfos,
   } = useCortexStore();
 
   const handleConnect = async () => {
@@ -61,6 +53,11 @@ export function ConnectScreen() {
         setConnection(config);
         setConnected(true);
         setWorkspaces(result.graphs || []);
+        if (result.workspaces) {
+          setWorkspaceInfos(result.workspaces);
+        }
+        // Persist connection for auto-reconnect
+        savePersistedState({ connection: config, workspace: null });
       } else {
         setConnectionError(result.error || "Connection failed");
       }
@@ -71,10 +68,6 @@ export function ConnectScreen() {
     } finally {
       setConnecting(false);
     }
-  };
-
-  const handleSelectWorkspace = (ws: string) => {
-    setSelectedWorkspace(ws);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -243,30 +236,6 @@ export function ConnectScreen() {
               )}
             </Button>
 
-            {/* Workspace selector (appears after successful connection) */}
-            {workspaces.length > 0 && (
-              <div className="space-y-2 pt-3 border-t border-border/30 animate-slide-up">
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <Database className="w-3 h-3" />
-                  Select Workspace Graph
-                </Label>
-                <Select
-                  value={selectedWorkspace || ""}
-                  onValueChange={handleSelectWorkspace}
-                >
-                  <SelectTrigger className="bg-background/60 border-border/40 rounded-lg h-10 dark:bg-background/40">
-                    <SelectValue placeholder="Choose a graph..." />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {workspaces.map((ws) => (
-                      <SelectItem key={ws} value={ws} className="rounded-lg">
-                        {ws}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
         </div>
 

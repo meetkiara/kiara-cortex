@@ -4,6 +4,15 @@ import type { ConnectionConfig, GraphData, GraphNode, GraphEdge, Episode } from 
 let dbInstance: FalkorDB | null = null;
 let currentConfig: ConnectionConfig | null = null;
 
+/**
+ * Core node property keys used by the Graphiti schema.
+ * Any property NOT in this set is treated as an entity-specific
+ * attribute and surfaced in the detail panel's attributes card.
+ */
+const CORE_PROPERTY_KEYS = new Set([
+  "uuid", "name", "summary", "group_id", "created_at", "name_embedding", "labels",
+]);
+
 function configChanged(config: ConnectionConfig): boolean {
   if (!currentConfig) return true;
   return (
@@ -22,7 +31,9 @@ export async function getConnection(config: ConnectionConfig): Promise<FalkorDB>
   if (dbInstance) {
     try {
       await dbInstance.close();
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to close previous FalkorDB connection:", e);
+    }
     dbInstance = null;
   }
 
@@ -63,76 +74,90 @@ export async function fetchGraphData(
   const db = await getConnection(config);
   const graph = db.selectGraph(workspaceId);
 
-  // Fetch entity nodes
+  // Fetch entity nodes — exclude Episodic (memory_*) nodes which are Graphiti's
+  // internal provenance nodes, not semantic entities. They appear in the Episodes tab instead.
   const nodesResult = await graph.roQuery<Record<string, unknown>>(
-    "MATCH (n) WHERE n.name IS NOT NULL RETURN n"
+    `MATCH (n) WHERE n.name IS NOT NULL AND NOT 'Episodic' IN labels(n)
+     RETURN properties(n) AS props, labels(n) AS labels`
   );
 
   const nodes: GraphNode[] = [];
   if (nodesResult.data) {
     for (const row of nodesResult.data) {
-      const n = row["n"] as Record<string, unknown>;
-      if (n) {
-        nodes.push({
-          uuid: (n.uuid as string) || (n.id as string) || "",
-          name: (n.name as string) || "Unnamed",
-          summary: (n.summary as string) || "",
-          labels: Array.isArray(n.labels) ? n.labels : [],
-          group_id: (n.group_id as string) || workspaceId,
-          created_at: (n.created_at as string) || "",
-        });
+      const props = (row.props ?? {}) as Record<string, unknown>;
+
+      // Extract extra attributes (entity-specific properties)
+      const attributes: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(props)) {
+        if (!CORE_PROPERTY_KEYS.has(key) && value != null && value !== "") {
+          // Convert BigInt to Number for JSON serialization safety
+          attributes[key] = typeof value === "bigint" ? Number(value) : value;
+        }
       }
+
+      nodes.push({
+        uuid: String(props.uuid ?? ""),
+        name: String(props.name ?? "") || "Unnamed",
+        summary: String(props.summary ?? ""),
+        labels: Array.isArray(row.labels) ? row.labels : [],
+        group_id: String(props.group_id ?? workspaceId),
+        created_at: String(props.created_at ?? ""),
+        ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
+      });
     }
   }
 
-  // Fetch entity edges (relationships)
+  // Fetch entity edges — project all properties as scalars
   const edgesResult = await graph.roQuery<Record<string, unknown>>(
-    "MATCH (s)-[r]->(t) WHERE r.fact IS NOT NULL RETURN s.uuid AS source_uuid, s.name AS source_name, t.uuid AS target_uuid, t.name AS target_name, r"
+    `MATCH (s)-[r]->(t) WHERE r.fact IS NOT NULL
+     RETURN r.uuid AS uuid, r.name AS name, r.fact AS fact,
+            s.uuid AS source_uuid, s.name AS source_name,
+            t.uuid AS target_uuid, t.name AS target_name,
+            r.created_at AS created_at, r.valid_at AS valid_at,
+            r.invalid_at AS invalid_at, r.expired_at AS expired_at,
+            r.group_id AS group_id`
   );
 
   const edges: GraphEdge[] = [];
   if (edgesResult.data) {
     for (const row of edgesResult.data) {
-      const r = row["r"] as Record<string, unknown>;
-      if (r) {
-        edges.push({
-          uuid: (r.uuid as string) || "",
-          name: (r.name as string) || "",
-          fact: (r.fact as string) || "",
-          source_uuid: (row.source_uuid as string) || "",
-          source_name: (row.source_name as string) || "",
-          target_uuid: (row.target_uuid as string) || "",
-          target_name: (row.target_name as string) || "",
-          created_at: (r.created_at as string) || "",
-          valid_at: (r.valid_at as string) || null,
-          invalid_at: (r.invalid_at as string) || null,
-          expired_at: (r.expired_at as string) || null,
-          group_id: (r.group_id as string) || workspaceId,
-        });
-      }
+      edges.push({
+        uuid: String(row.uuid ?? ""),
+        name: String(row.name ?? ""),
+        fact: String(row.fact ?? ""),
+        source_uuid: String(row.source_uuid ?? ""),
+        source_name: String(row.source_name ?? ""),
+        target_uuid: String(row.target_uuid ?? ""),
+        target_name: String(row.target_name ?? ""),
+        created_at: String(row.created_at ?? ""),
+        valid_at: row.valid_at ? String(row.valid_at) : null,
+        invalid_at: row.invalid_at ? String(row.invalid_at) : null,
+        expired_at: row.expired_at ? String(row.expired_at) : null,
+        group_id: String(row.group_id ?? workspaceId),
+      });
     }
   }
 
-  // Fetch episodes
+  // Fetch episodes — project properties as scalars
   const episodesResult = await graph.roQuery<Record<string, unknown>>(
-    "MATCH (e:Episodic) RETURN e"
+    `MATCH (e:Episodic)
+     RETURN e.uuid AS uuid, e.name AS name, e.source AS source,
+            e.source_description AS source_description, e.content AS content,
+            e.created_at AS created_at, e.group_id AS group_id`
   );
 
   const episodes: Episode[] = [];
   if (episodesResult.data) {
     for (const row of episodesResult.data) {
-      const e = row["e"] as Record<string, unknown>;
-      if (e) {
-        episodes.push({
-          uuid: (e.uuid as string) || "",
-          name: (e.name as string) || "",
-          source: (e.source as string) || "",
-          source_description: (e.source_description as string) || "",
-          content: (e.content as string) || "",
-          created_at: (e.created_at as string) || "",
-          group_id: (e.group_id as string) || workspaceId,
-        });
-      }
+      episodes.push({
+        uuid: String(row.uuid ?? ""),
+        name: String(row.name ?? ""),
+        source: String(row.source ?? ""),
+        source_description: String(row.source_description ?? ""),
+        content: String(row.content ?? ""),
+        created_at: String(row.created_at ?? ""),
+        group_id: String(row.group_id ?? workspaceId),
+      });
     }
   }
 
@@ -180,7 +205,9 @@ export async function closeConnection(): Promise<void> {
   if (dbInstance) {
     try {
       await dbInstance.close();
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to close FalkorDB connection:", e);
+    }
     dbInstance = null;
     currentConfig = null;
   }

@@ -137,46 +137,48 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
 
-  /* Node colors for graph */
-  --node-merchant:   oklch(69.2% 0.200 35);
-  --node-property:   oklch(62.0% 0.065 200);
-  --node-unit:       oklch(81.0% 0.043 200);
-  --node-user:       oklch(75% 0.160 75);
-  --node-expense:    oklch(53.0% 0.085 22);
-  --node-entity:     oklch(73.0% 0.025 80);
+  /* Node colors for graph — vibrant, hue-separated */
+  --node-merchant:   oklch(63% 0.22 30);
+  --node-property:   oklch(65% 0.17 230);
+  --node-unit:       oklch(55% 0.20 290);
+  --node-user:       oklch(73% 0.17 75);
+  --node-expense:    oklch(58% 0.22 25);
+  --node-entity:     oklch(55% 0.01 250);
 }
 
 /* --- Dark Mode Semantic Tokens --- */
+/* Lifted from pitch-black to warm espresso-charcoal so UI elements
+   have visible distinction and the experience isn't flat. */
 .dark {
-  --background:         oklch(13.0% 0.004 25);
+  --background:         oklch(16.0% 0.006 25);
   --foreground:         oklch(96.0% 0.005 80);
   --heading:            var(--color-sand-200);
-  --card:               oklch(19.0% 0.010 25);
+  --card:               oklch(20.0% 0.010 25);
   --card-foreground:    oklch(96.0% 0.005 80);
-  --popover:            oklch(21.0% 0.012 25);
+  --popover:            oklch(22.0% 0.012 25);
   --popover-foreground: oklch(96.0% 0.005 80);
   --primary:            var(--color-coral-500);
   --primary-foreground: white;
-  --secondary:          oklch(17.0% 0.008 25);
+  --secondary:          oklch(20.0% 0.008 25);
   --secondary-foreground: oklch(92.0% 0.005 80);
-  --accent:             oklch(17.0% 0.008 25);
+  --accent:             oklch(20.0% 0.008 25);
   --accent-foreground:  var(--color-teal-300);
-  --muted:              oklch(16.0% 0.006 25);
-  --muted-foreground:   oklch(60.0% 0.008 70);
-  --border:             oklch(26.0% 0.010 25);
-  --input:              oklch(26.0% 0.010 25);
+  --muted:              oklch(19.0% 0.006 25);
+  --muted-foreground:   oklch(64.0% 0.010 70);
+  --border:             oklch(28.0% 0.010 25);
+  --input:              oklch(28.0% 0.010 25);
   --ring:               var(--color-coral-500);
   --destructive:        oklch(60% 0.200 27);
   --destructive-foreground: white;
   --success:            var(--color-teal-400);
-  --success-foreground: oklch(13.0% 0.004 25);
+  --success-foreground: oklch(16.0% 0.006 25);
   --warning:            oklch(78% 0.160 75);
-  --warning-foreground: oklch(13.0% 0.004 25);
+  --warning-foreground: oklch(16.0% 0.006 25);
 
-  --sidebar:                  oklch(15.0% 0.005 25);
+  --sidebar:                  oklch(18.0% 0.006 25);
   --sidebar-foreground:       oklch(92.0% 0.005 80);
-  --sidebar-border:           oklch(26.0% 0.010 25);
-  --sidebar-accent:           oklch(19.0% 0.010 25);
+  --sidebar-border:           oklch(28.0% 0.010 25);
+  --sidebar-accent:           oklch(22.0% 0.010 25);
   --sidebar-accent-foreground: oklch(96.0% 0.005 80);
   --sidebar-ring:             var(--color-coral-500);
 
@@ -187,10 +189,10 @@
   --chart-5: var(--color-sand-400);
 
   /* Glass tokens — dark */
-  --glass-bg: oklch(15% 0.008 25 / 0.70);
-  --glass-border: oklch(99% 0.005 80 / 0.08);
-  --glass-subtle-bg: oklch(15% 0.008 25 / 0.50);
-  --glass-subtle-border: oklch(99% 0.005 80 / 0.06);
+  --glass-bg: oklch(18% 0.008 25 / 0.75);
+  --glass-border: oklch(99% 0.005 80 / 0.10);
+  --glass-subtle-bg: oklch(18% 0.008 25 / 0.55);
+  --glass-subtle-border: oklch(99% 0.005 80 / 0.08);
 
   /* Dark shadows */
   --shadow-xs: 0 1px 2px oklch(5% 0 0 / 0.40);
@@ -199,12 +201,12 @@
   --shadow-lg: 0 10px 15px oklch(5% 0 0 / 0.50), 0 4px 6px oklch(5% 0 0 / 0.30);
   --shadow-xl: 0 20px 25px oklch(5% 0 0 / 0.50), 0 8px 10px oklch(5% 0 0 / 0.30);
 
-  --node-merchant:   oklch(74.5% 0.150 35);
-  --node-property:   oklch(72.0% 0.060 200);
-  --node-unit:       oklch(86.0% 0.038 200);
-  --node-user:       oklch(78% 0.160 75);
-  --node-expense:    oklch(65.0% 0.075 22);
-  --node-entity:     oklch(82.0% 0.028 85);
+  --node-merchant:   oklch(70% 0.18 30);
+  --node-property:   oklch(72% 0.14 230);
+  --node-unit:       oklch(70% 0.16 290);
+  --node-user:       oklch(78% 0.15 80);
+  --node-expense:    oklch(68% 0.18 20);
+  --node-entity:     oklch(68% 0.01 250);
 }
 
 /* --- Tailwind Theme Integration --- */
@@ -261,6 +263,8 @@
   --animate-scale-in: scale-in 0.2s ease-out;
   --animate-scale-out: scale-out 0.15s ease-in;
   --animate-spin: spin 1s linear infinite;
+  --animate-slide-in-right: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-out-right: slide-out-right 0.2s ease-in;
 
   @keyframes fade-in {
     from { opacity: 0; }
@@ -285,6 +289,14 @@
   @keyframes scale-out {
     from { opacity: 1; transform: scale(1); }
     to { opacity: 0; transform: scale(0.95); }
+  }
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(1rem); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slide-out-right {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(1rem); }
   }
 }
 
@@ -366,10 +378,31 @@ body {
   background: color-mix(in oklch, var(--primary), transparent 60%);
 }
 
-/* Graph canvas subtle radial background */
+/* Graph controls overlay */
+.graph-controls {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* Graph canvas — fine-line grid with subtle edge vignette.
+   Light: warm sand base with faint grid lines
+   Dark:  slightly raised charcoal with visible grid for spatial reference */
 .graph-canvas-bg {
-  background: radial-gradient(ellipse at center, var(--color-sand-100) 0%, var(--background) 100%);
+  --grid-color: oklch(from var(--foreground) l c h / 0.06);
+  --grid-size: 32px;
+  background:
+    radial-gradient(ellipse 80% 80% at 50% 50%, transparent 50%, oklch(from var(--background) l c h / 0.45) 100%),
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 100% 100%, var(--grid-size) var(--grid-size), var(--grid-size) var(--grid-size);
+  background-position: center, center, center;
+  background-color: var(--color-sand-50);
 }
 .dark .graph-canvas-bg {
-  background: radial-gradient(ellipse at center, oklch(16% 0.008 25) 0%, var(--background) 100%);
+  --grid-color: oklch(99% 0 0 / 0.04);
+  background-color: oklch(14% 0.006 25);
 }

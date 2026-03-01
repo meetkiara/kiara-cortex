@@ -1,4 +1,4 @@
-import type { ConnectionConfig, GraphData } from "./types";
+import type { ConnectionConfig, GraphData, WorkspaceInfo } from "./types";
 
 function getConnectionPayload(config: ConnectionConfig, extra?: Record<string, string>) {
   return {
@@ -12,7 +12,7 @@ function getConnectionPayload(config: ConnectionConfig, extra?: Record<string, s
 
 export async function testConnection(
   config: ConnectionConfig
-): Promise<{ connected: boolean; graphs: string[]; error?: string }> {
+): Promise<{ connected: boolean; graphs: string[]; workspaces?: WorkspaceInfo[]; error?: string }> {
   const res = await fetch("/api/connect", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -38,7 +38,7 @@ export async function fetchGraph(
     const err = await res.json();
     throw new Error(err.error || "Failed to fetch graph");
   }
-  return res.json();
+  return res.json() as Promise<GraphData>;
 }
 
 export async function apiDeleteNode(

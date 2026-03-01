@@ -7,6 +7,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Kiara Cortex",
   description: "Knowledge graph explorer for Kiara AI",
+  icons: {
+    icon: "/logo-brandmark.png",
+    apple: "/logo-brandmark.png",
+  },
 };
 
 export default function RootLayout({
@@ -41,7 +45,7 @@ export default function RootLayout({
           <Toaster
             position="bottom-right"
             toastOptions={{
-              className: "glass font-sans",
+              className: "!bg-card font-sans shadow-lg border border-border/50",
             }}
           />
         </ThemeProvider>

@@ -1,13 +1,15 @@
 "use client";
 
 import { create } from "zustand";
-import type {
-  ConnectionConfig,
-  GraphData,
-  GraphNode,
-  GraphEdge,
-  Episode,
-  EntityType,
+import {
+  ENTITY_COLORS,
+  type ConnectionConfig,
+  type GraphData,
+  type GraphNode,
+  type GraphEdge,
+  type Episode,
+  type EntityType,
+  type WorkspaceInfo,
 } from "./types";
 
 type HiddenTypesMap = Partial<Record<EntityType, boolean>>;
@@ -21,6 +23,7 @@ interface CortexState {
 
   // Workspace
   workspaces: string[];
+  workspaceInfos: WorkspaceInfo[];
   selectedWorkspace: string | null;
 
   // Graph data
@@ -32,9 +35,10 @@ interface CortexState {
   selectedNode: GraphNode | null;
   selectedEdge: GraphEdge | null;
   selectedEpisode: Episode | null;
-  sidebarTab: "nodes" | "edges" | "episodes";
+  sidebarTab: "nodes" | "edges" | "episodes" | "facts";
   searchQuery: string;
   hiddenTypes: HiddenTypesMap;
+  showEdgeLabels: boolean;
 
   // Actions
   setConnection: (config: ConnectionConfig) => void;
@@ -42,6 +46,7 @@ interface CortexState {
   setConnecting: (connecting: boolean) => void;
   setConnectionError: (error: string | null) => void;
   setWorkspaces: (workspaces: string[]) => void;
+  setWorkspaceInfos: (infos: WorkspaceInfo[]) => void;
   setSelectedWorkspace: (workspace: string | null) => void;
   setGraphData: (data: GraphData | null) => void;
   setLoading: (loading: boolean) => void;
@@ -49,10 +54,13 @@ interface CortexState {
   setSelectedNode: (node: GraphNode | null) => void;
   setSelectedEdge: (edge: GraphEdge | null) => void;
   setSelectedEpisode: (episode: Episode | null) => void;
-  setSidebarTab: (tab: "nodes" | "edges" | "episodes") => void;
+  setSidebarTab: (tab: "nodes" | "edges" | "episodes" | "facts") => void;
   setSearchQuery: (query: string) => void;
   toggleType: (type: EntityType) => void;
+  showOnlyType: (type: EntityType) => void;
+  showAllTypes: () => void;
   isTypeHidden: (type: EntityType) => boolean;
+  toggleEdgeLabels: () => void;
   clearSelection: () => void;
   disconnect: () => void;
 
@@ -67,6 +75,7 @@ export const useCortexStore = create<CortexState>((set, get) => ({
   isConnecting: false,
   connectionError: null,
   workspaces: [],
+  workspaceInfos: [],
   selectedWorkspace: null,
   graphData: null,
   isLoading: false,
@@ -77,12 +86,14 @@ export const useCortexStore = create<CortexState>((set, get) => ({
   sidebarTab: "nodes",
   searchQuery: "",
   hiddenTypes: {},
+  showEdgeLabels: false,
 
   setConnection: (config) => set({ connection: config }),
   setConnected: (connected) => set({ isConnected: connected }),
   setConnecting: (connecting) => set({ isConnecting: connecting }),
   setConnectionError: (error) => set({ connectionError: error }),
   setWorkspaces: (workspaces) => set({ workspaces }),
+  setWorkspaceInfos: (infos) => set({ workspaceInfos: infos }),
   setSelectedWorkspace: (workspace) => set({ selectedWorkspace: workspace }),
   setGraphData: (data) => set({ graphData: data }),
   setLoading: (loading) => set({ isLoading: loading }),
@@ -102,7 +113,17 @@ export const useCortexStore = create<CortexState>((set, get) => ({
         [type]: !state.hiddenTypes[type],
       },
     })),
+  showOnlyType: (type) =>
+    set(() => {
+      const newHidden: HiddenTypesMap = {};
+      for (const t of Object.keys(ENTITY_COLORS) as EntityType[]) {
+        if (t !== type) newHidden[t] = true;
+      }
+      return { hiddenTypes: newHidden };
+    }),
+  showAllTypes: () => set({ hiddenTypes: {} }),
   isTypeHidden: (type) => !!get().hiddenTypes[type],
+  toggleEdgeLabels: () => set((state) => ({ showEdgeLabels: !state.showEdgeLabels })),
   clearSelection: () =>
     set({ selectedNode: null, selectedEdge: null, selectedEpisode: null }),
   disconnect: () =>
@@ -112,6 +133,7 @@ export const useCortexStore = create<CortexState>((set, get) => ({
       isConnecting: false,
       connectionError: null,
       workspaces: [],
+      workspaceInfos: [],
       selectedWorkspace: null,
       graphData: null,
       selectedNode: null,

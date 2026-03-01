@@ -13,10 +13,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const portNum = Number(port);
+    if (Number.isNaN(portNum)) {
+      return NextResponse.json(
+        { error: "Port must be a valid number" },
+        { status: 400 }
+      );
+    }
+
     const data = await fetchGraphData(
       {
         host,
-        port: Number(port),
+        port: portNum,
         username: username || undefined,
         password: password || undefined,
       },
