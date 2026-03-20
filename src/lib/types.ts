@@ -71,6 +71,10 @@ export type EntityType =
   | "User"
   | "ExpenseCategory"
   | "ClassificationPreference"
+  | "PayerIdentity"
+  | "TenantReference"
+  | "BankInstitution"
+  | "PaymentPattern"
   | "Entity";
 
 /** Amber color used for episodes across sidebar, detail panel, and stats bar */
@@ -83,6 +87,10 @@ export const ENTITY_COLORS: Record<EntityType, string> = {
   User: "#F59E0B",
   ExpenseCategory: "#EF4444",
   ClassificationPreference: "#14B8A6",
+  PayerIdentity: "#10B981",
+  TenantReference: "#EC4899",
+  BankInstitution: "#6366F1",
+  PaymentPattern: "#06B6D4",
   Entity: "#6B7280",
 };
 
@@ -93,6 +101,10 @@ export const ENTITY_COLORS_DARK: Record<EntityType, string> = {
   User: "#FBBF24",
   ExpenseCategory: "#F87171",
   ClassificationPreference: "#2DD4BF",
+  PayerIdentity: "#34D399",
+  TenantReference: "#F472B6",
+  BankInstitution: "#818CF8",
+  PaymentPattern: "#22D3EE",
   Entity: "#9CA3AF",
 };
 
@@ -104,6 +116,10 @@ export function getEntityType(labels: string[]): EntityType {
     "User",
     "ExpenseCategory",
     "ClassificationPreference",
+    "PayerIdentity",
+    "TenantReference",
+    "BankInstitution",
+    "PaymentPattern",
   ];
   for (const t of types) {
     if (labels.includes(t)) return t;
@@ -246,6 +262,27 @@ export const ENTITY_ATTRIBUTE_META: Partial<
     is_managed: { label: "Managed", kind: "boolean" },
     source: { label: "Source", kind: "badge" },
   },
+  PayerIdentity: {
+    normalized_name: { label: "Normalized Name", kind: "text" },
+    confidence: { label: "Confidence", kind: "mono" },
+    match_count: { label: "Match Count", kind: "mono" },
+    known_aliases: { label: "Aliases", kind: "text" },
+  },
+  TenantReference: {
+    tenant_user_workspace_id: { label: "Tenant ID", kind: "mono" },
+    unit_label: { label: "Unit", kind: "badge" },
+  },
+  BankInstitution: {
+    routing_number: { label: "Routing Number", kind: "mono" },
+    micr_format: { label: "MICR Format", kind: "mono" },
+    account_digits: { label: "Account Digits", kind: "mono" },
+    check_format_notes: { label: "Check Format Notes", kind: "text" },
+  },
+  PaymentPattern: {
+    frequency: { label: "Frequency", kind: "badge" },
+    typical_amount: { label: "Typical Amount", kind: "mono" },
+    instrument_type: { label: "Instrument", kind: "badge" },
+  },
 };
 
 /**
@@ -291,6 +328,14 @@ export function getNodeSubtitle(node: GraphNode): string | null {
       return a.category_type ? formatAttributeValue(a.category_type) : null;
     case "ClassificationPreference":
       return a.merchant_name ? String(a.merchant_name) : (a.preferred_category ? formatAttributeValue(a.preferred_category) : null);
+    case "PayerIdentity":
+      return a.normalized_name ? String(a.normalized_name) : null;
+    case "TenantReference":
+      return a.unit_label ? String(a.unit_label) : null;
+    case "BankInstitution":
+      return a.routing_number ? String(a.routing_number) : null;
+    case "PaymentPattern":
+      return a.frequency ? formatAttributeValue(a.frequency) : (a.instrument_type ? formatAttributeValue(a.instrument_type) : null);
     default:
       return null;
   }
